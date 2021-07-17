@@ -26,6 +26,7 @@ const (
 
 // Response constants
 const (
+	ContentTypeHeader          = "Content-Type"
 	ApplicationJSONContentType = "application/json"
 	TextStringContentType      = "text/string"
 )
