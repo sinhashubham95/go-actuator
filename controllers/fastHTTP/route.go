@@ -11,6 +11,11 @@ import (
 
 // HandleRequest is the generic request handler for actuator
 func HandleRequest(config *models.Config, ctx *fasthttp.RequestCtx) {
+	if method := string(ctx.Method()); method != http.MethodGet {
+		// this means this is not an actuator endpoint
+		ctx.SetStatusCode(http.StatusNotFound)
+		return
+	}
 	switch string(ctx.Path()) {
 	case filepath.Join(config.Prefix, commons.EnvEndpoint):
 		handle(config.Endpoints, models.Env, ctx, HandleEnv)
