@@ -14,8 +14,6 @@ func ConfigureHandlers(config *models.Config, mux *http.ServeMux) {
 		switch e {
 		case models.Env:
 			mux.HandleFunc(filepath.Join(config.Prefix, commons.EnvEndpoint), handle(HandleEnv))
-		case models.Health:
-			mux.HandleFunc(filepath.Join(config.Prefix, commons.HealthEndpoint), handle(HandleHealth))
 		case models.HTTPTrace:
 			mux.HandleFunc(filepath.Join(config.Prefix, commons.HTTPTraceEndpoint), handle(HandleHTTPTrace))
 		case models.Info:
