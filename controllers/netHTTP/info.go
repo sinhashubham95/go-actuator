@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/controllers/core"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleInfo is the handler function for the info endpoint

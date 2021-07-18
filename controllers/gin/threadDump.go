@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 
-	"github.com/sinhashubham95/go-actuator/controllers/core"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleThreadDump is the handler to get the thread dump

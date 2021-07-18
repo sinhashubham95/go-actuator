@@ -3,7 +3,7 @@ package netHTTP
 import (
 	"net/http"
 
-	"github.com/sinhashubham95/go-actuator/controllers/core"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleShutdown is the handler function for the shutdown endpoint

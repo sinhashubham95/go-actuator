@@ -1,10 +1,11 @@
 package fastHTTP
 
 import (
-	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/controllers/core"
 	"github.com/valyala/fasthttp"
 	"net/http"
+
+	"github.com/sinhashubham95/go-actuator/commons"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleEnv is the handler function for the env endpoint

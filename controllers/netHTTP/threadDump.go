@@ -1,9 +1,10 @@
 package netHTTP
 
 import (
-	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/controllers/core"
 	"net/http"
+
+	"github.com/sinhashubham95/go-actuator/commons"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 func HandleThreadDump(writer http.ResponseWriter, request *http.Request) {

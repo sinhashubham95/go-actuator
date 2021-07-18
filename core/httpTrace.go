@@ -17,7 +17,9 @@ var httpTraceResults []*models.HTTPTraceResult
 // this is mandatory to populate the trace in the result set
 func WithClientTrace(request *http.Request) *http.Request {
 	// create a result
-	result := &models.HTTPTraceResult{}
+	result := &models.HTTPTraceResult{
+		Host: request.Host,
+	}
 
 	// set the trace in the request context
 	request.WithContext(httptrace.WithClientTrace(request.Context(), &httptrace.ClientTrace{
@@ -58,7 +60,7 @@ func WithClientTrace(request *http.Request) *http.Request {
 				result.IsReused = true
 			}
 		},
-		WroteRequest: func(_ httptrace.WroteRequestInfo) {
+		WroteRequest: func(info httptrace.WroteRequestInfo) {
 			result.ServerStart = time.Now()
 
 			// when client does not use dial context or old package

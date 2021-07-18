@@ -14,7 +14,7 @@ const (
 	GitCommitAuthor       = "commitAuthor"
 	GitCommitID           = "commitId"
 	GitCommitTime         = "commitTime"
-	GitPrimaryBranch      = "primaryBranch"
+	GitPrimaryBranch      = "branch"
 	GitURL                = "url"
 	GoRoutines            = "goroutine"
 	HostName              = "hostName"

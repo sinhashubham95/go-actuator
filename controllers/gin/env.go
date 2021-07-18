@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 
-	"github.com/sinhashubham95/go-actuator/controllers/core"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleEnv is the handler function for the env endpoint

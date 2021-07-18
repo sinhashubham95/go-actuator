@@ -2,8 +2,9 @@ package gin
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sinhashubham95/go-actuator/controllers/core"
 	"net/http"
+
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleHTTPTrace is used to handle the http trace request

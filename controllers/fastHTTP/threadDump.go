@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/controllers/core"
+	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleThreadDump is the handler for getting thread dump
