@@ -1,9 +1,9 @@
 # GO Actuator
 
-[![GoDoc](https://godoc.org/github.com/sinhashubham95/bleep?status.svg)](https://pkg.go.dev/github.com/sinhashubham95/bleep)
-[![Release](https://img.shields.io/github/v/release/sinhashubham95/bleep?sort=semver)](https://github.com/sinhashubham95/bleep/releases)
-[![Report](https://goreportcard.com/badge/github.com/sinhashubham95/bleep)](https://goreportcard.com/report/github.com/sinhashubham95/bleep)
-[![Coverage Status](https://coveralls.io/repos/github/sinhashubham95/bleep/badge.svg?branch=master)](https://coveralls.io/github/sinhashubham95/bleep?branch=master)
+[![GoDoc](https://godoc.org/github.com/sinhashubham95/go-actuator?status.svg)](https://pkg.go.dev/github.com/sinhashubham95/go-actuator)
+[![Release](https://img.shields.io/github/v/release/sinhashubham95/go-actuator?sort=semver)](https://github.com/sinhashubham95/go-actuator/releases)
+[![Report](https://goreportcard.com/badge/github.com/sinhashubham95/go-actuator)](https://goreportcard.com/report/github.com/sinhashubham95/go-actuator)
+[![Coverage Status](https://coveralls.io/repos/github/sinhashubham95/go-actuator/badge.svg?branch=master)](https://coveralls.io/github/sinhashubham95/go-actuator?branch=master)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#utilities)
 
 GO actuator configures the set of actuator endpoints for your application. It is compatible with [Fast HTTP](https://github.com/valyala/fasthttp), [GIN](https://github.com/gin-gonic/gin) and [NET/HTTP](https://pkg.go.dev/net/http).
