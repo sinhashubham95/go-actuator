@@ -2,14 +2,14 @@ package fastHTTP
 
 import (
 	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/controllers/base"
+	"github.com/sinhashubham95/go-actuator/controllers/core"
 	"github.com/valyala/fasthttp"
 	"net/http"
 )
 
 // HandleEnv is the handler function for the env endpoint
 func HandleEnv(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(base.GetEnvironmentVariables())
+	body, err := commons.EncodeJSON(core.GetEnvironmentVariables())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

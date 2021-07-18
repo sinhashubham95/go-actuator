@@ -21,6 +21,8 @@ func HandleRequest(config *models.Config, ctx *fasthttp.RequestCtx) {
 		handle(config.Endpoints, models.Env, ctx, HandleEnv)
 	case filepath.Join(config.Prefix, commons.HealthEndpoint):
 		handle(config.Endpoints, models.Health, ctx, HandleHealth)
+	case filepath.Join(config.Prefix, commons.HTTPTraceEndpoint):
+		handle(config.Endpoints, models.HTTPTrace, ctx, HandleHTTPTrace)
 	case filepath.Join(config.Prefix, commons.InfoEndpoint):
 		handle(config.Endpoints, models.Info, ctx, HandleInfo)
 	case filepath.Join(config.Prefix, commons.MetricsEndpoint):

@@ -1,4 +1,4 @@
-package fastHTTP
+package core
 
 import (
 	"github.com/valyala/fasthttp"
@@ -6,4 +6,5 @@ import (
 
 // HandleHealth is the handler function for the health endpoint
 func HandleHealth(ctx *fasthttp.RequestCtx) {
+
 }

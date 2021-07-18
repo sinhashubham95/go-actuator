@@ -16,6 +16,8 @@ func ConfigureHandlers(config *models.Config, router *gin.Engine) {
 			actuator.GET(commons.EnvEndpoint, HandleEnv)
 		case models.Health:
 			actuator.GET(commons.HealthEndpoint, HandleHealth)
+		case models.HTTPTrace:
+			actuator.GET(commons.HTTPTraceEndpoint, HandleHTTPTrace)
 		case models.Info:
 			actuator.GET(commons.HealthEndpoint, HandleInfo)
 		case models.Metrics:

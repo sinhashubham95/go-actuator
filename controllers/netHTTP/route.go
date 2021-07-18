@@ -1,10 +1,10 @@
-package gin
+package netHTTP
 
 import (
-	"github.com/sinhashubham95/go-actuator/commons"
 	"net/http"
 	"path/filepath"
 
+	"github.com/sinhashubham95/go-actuator/commons"
 	"github.com/sinhashubham95/go-actuator/models"
 )
 
@@ -16,6 +16,8 @@ func ConfigureHandlers(config *models.Config, mux *http.ServeMux) {
 			mux.HandleFunc(filepath.Join(config.Prefix, commons.EnvEndpoint), handle(HandleEnv))
 		case models.Health:
 			mux.HandleFunc(filepath.Join(config.Prefix, commons.HealthEndpoint), handle(HandleHealth))
+		case models.HTTPTrace:
+			mux.HandleFunc(filepath.Join(config.Prefix, commons.HTTPTraceEndpoint), handle(HandleHTTPTrace))
 		case models.Info:
 			mux.HandleFunc(filepath.Join(config.Prefix, commons.InfoEndpoint), handle(HandleInfo))
 		case models.Metrics:

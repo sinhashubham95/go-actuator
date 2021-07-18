@@ -6,8 +6,10 @@ import (
 )
 
 var (
-	env  = flag.String(commons.Env, commons.EnvDefaultValue, commons.EnvUsage)
-	port = flag.Int(commons.Port, commons.PortDefaultValue, commons.PortUsage)
+	env     = flag.String(commons.Env, commons.EnvDefaultValue, commons.EnvUsage)
+	name    = flag.String(commons.Name, commons.NameDefaultValue, commons.NameUsage)
+	port    = flag.Int(commons.Port, commons.PortDefaultValue, commons.PortUsage)
+	version = flag.String(commons.Version, commons.VersionDefaultValue, commons.VersionUsage)
 )
 
 func init() {
@@ -19,7 +21,17 @@ func Env() string {
 	return *env
 }
 
+// Name is the application name
+func Name() string {
+	return *name
+}
+
 // Port is the port number where the application is running
 func Port() int {
 	return *port
+}
+
+// Version is the application build version
+func Version() string {
+	return *version
 }
