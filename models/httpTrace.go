@@ -1,32 +1,39 @@
 package models
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
-// HTTPTraceResult is the set of useful information to trace the http request
+// HTTPTraceRequest is the set of useful information to trace the http request
+type HTTPTraceRequest struct {
+	Method  string              `json:"method"`
+	URL     string              `json:"url"`
+	Headers map[string][]string `json:"headers"`
+}
+
+// HTTPTraceResponse is the set of useful information to trace the http response
+type HTTPTraceResponse struct {
+	Status  int                 `json:"status"`
+	Headers map[string][]string `json:"headers"`
+}
+
+// HTTPTraceResult is the set of useful information to trace the http request to your application
+// and response from your application
 type HTTPTraceResult struct {
-	Host string `json:"host"`
+	Timestamp time.Time          `json:"timestamp"`
+	Duration  time.Duration      `json:"duration"`
+	Request   *HTTPTraceRequest  `json:"request"`
+	Response  *HTTPTraceResponse `json:"response"`
+}
 
-	DNSStart  time.Time     `json:"-"`
-	DNSDone   time.Time     `json:"-"`
-	DNSLookup time.Duration `json:"dnsLookupTimeTakenInNanos"`
+// HTTPStatusRecorder extends the response writer to handle the tracing of the status code value
+type HTTPStatusRecorder struct {
+	http.ResponseWriter
+	StatusCode int
+}
 
-	TCPStart      time.Time     `json:"-"`
-	TCPDone       time.Time     `json:"-"`
-	TCPConnection time.Duration `json:"tcpConnectionTimeTakenInNanos"`
-
-	Connect     time.Duration `json:"connectTimeTakenInNanos"`
-	PreTransfer time.Duration `json:"preTransferTimeTakenInNanos"`
-
-	IsTLS        bool          `json:"isTLSEnabled"`
-	TLSStart     time.Time     `json:"-"`
-	TLSDone      time.Time     `json:"-"`
-	TLSHandshake time.Duration `json:"tlsHandshakeTimeTakenInNanos"`
-
-	ServerStart      time.Time     `json:"-"`
-	ServerDone       time.Time     `json:"-"`
-	ServerProcessing time.Duration `json:"serverProcessingTimeTakenInNanos"`
-
-	IsReused bool `json:"isConnectionReused"`
-
-	Done bool `json:"-"`
+func (r *HTTPStatusRecorder) WriteHeader(statusCode int) {
+	r.StatusCode = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
 }

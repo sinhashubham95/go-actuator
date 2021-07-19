@@ -9,6 +9,7 @@ import (
 
 func ConfigureHandlers(config *models.Config, router *gin.Engine) {
 	actuator := router.Group(config.Prefix)
+	gin.Logger()
 	for _, e := range config.Endpoints {
 		// now one by one add the handler of each endpoint
 		switch e {

@@ -1,124 +1,128 @@
 package core
 
 import (
-	"crypto/tls"
-	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/models"
+	"github.com/gin-gonic/gin"
+	"github.com/valyala/fasthttp"
 	"net/http"
-	"net/http/httptrace"
 	"sync"
 	"time"
+
+	"github.com/sinhashubham95/go-actuator/commons"
+	"github.com/sinhashubham95/go-actuator/models"
 )
 
 var httpTraceResultsMu sync.Mutex
 var httpTraceResults []*models.HTTPTraceResult
 
-// WithClientTrace is used to attach the trace to the http request
-// this is mandatory to populate the trace in the result set
-func WithClientTrace(request *http.Request) *http.Request {
-	// create a result
-	result := &models.HTTPTraceResult{
-		Host: request.Host,
+func WrapFastHTTPHandler(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		// for each new request create a result and trace the request
+		result := &models.HTTPTraceResult{
+			Timestamp: time.Now(),
+			Request: &models.HTTPTraceRequest{
+				Method:  string(ctx.Method()),
+				URL:     string(ctx.RequestURI()),
+				Headers: getFastHTTPRequestHeaders(ctx),
+			},
+		}
+		// now process the request
+		handler(ctx)
+		// now trace the response
+		result.Duration = time.Now().Sub(result.Timestamp)
+		result.Response = &models.HTTPTraceResponse{
+			Status:  ctx.Response.StatusCode(),
+			Headers: getFastHTTPResponseHeaders(ctx),
+		}
+		// save this result
+		saveResult(result)
 	}
+}
 
-	// set the trace in the request context
-	request.WithContext(httptrace.WithClientTrace(request.Context(), &httptrace.ClientTrace{
-		DNSStart: func(httptrace.DNSStartInfo) {
-			result.DNSStart = time.Now()
-		},
-		DNSDone: func(httptrace.DNSDoneInfo) {
-			result.DNSDone = time.Now()
-			result.DNSLookup = result.DNSDone.Sub(result.DNSStart)
-		},
-		ConnectStart: func(_, _ string) {
-			result.TCPStart = time.Now()
+func GINTracer() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		// for each new request create a result and trace the request
+		result := &models.HTTPTraceResult{
+			Timestamp: time.Now(),
+			Request: &models.HTTPTraceRequest{
+				Method:  ctx.Request.Method,
+				URL:     ctx.Request.URL.String(),
+				Headers: ctx.Request.Header,
+			},
+		}
+		// now process the request
+		ctx.Next()
+		// now trace the response
+		result.Duration = time.Now().Sub(result.Timestamp)
+		result.Response = &models.HTTPTraceResponse{
+			Status:  ctx.Writer.Status(),
+			Headers: ctx.Writer.Header(),
+		}
+		// save this result
+		saveResult(result)
+	}
+}
 
-			// when connecting to IP address
-			if result.DNSStart.IsZero() {
-				result.DNSStart = result.TCPStart
-				result.DNSDone = result.TCPStart
-			}
-		},
-		ConnectDone: func(_, _ string, _ error) {
-			result.TCPDone = time.Now()
-			result.TCPConnection = result.TCPDone.Sub(result.TCPStart)
-
-			result.Connect = result.TCPDone.Sub(result.DNSStart)
-		},
-		TLSHandshakeStart: func() {
-			result.IsTLS = true
-			result.TLSStart = time.Now()
-		},
-		TLSHandshakeDone: func(_ tls.ConnectionState, _ error) {
-			result.TLSDone = time.Now()
-			result.TLSHandshake = result.TLSDone.Sub(result.TLSStart)
-
-			result.PreTransfer = result.TLSDone.Sub(result.DNSStart)
-		},
-		GotConn: func(info httptrace.GotConnInfo) {
-			if info.Reused {
-				result.IsReused = true
-			}
-		},
-		WroteRequest: func(info httptrace.WroteRequestInfo) {
-			result.ServerStart = time.Now()
-
-			// when client does not use dial context or old package
-			if result.DNSStart.IsZero() && result.TCPStart.IsZero() {
-				result.DNSStart = result.ServerStart
-				result.DNSDone = result.ServerStart
-				result.TCPStart = result.ServerStart
-				result.TCPDone = result.ServerStart
-			}
-
-			// when connection is reused, then dns lookup, tcp connection and tls handshake does not happen
-			if result.IsReused {
-				result.DNSStart = result.ServerStart
-				result.DNSDone = result.ServerStart
-				result.TCPStart = result.ServerStart
-				result.TCPDone = result.ServerStart
-				result.TLSStart = result.ServerStart
-				result.TLSDone = result.ServerStart
-			}
-		},
-		GotFirstResponseByte: func() {
-			result.ServerDone = time.Now()
-			result.ServerProcessing = result.ServerDone.Sub(result.ServerStart)
-
-			result.Done = true
-		},
-	}))
-
-	// save the result
-	httpTraceResultsMu.Lock()
-	defer httpTraceResultsMu.Unlock()
-	httpTraceResults = append(httpTraceResults, result)
-	cleanupHTTPTraceResults()
-
-	// return the request
-	return request
+func WrapNetHTTPHandler(handler http.HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		// for each new request create a result and trace the request
+		result := &models.HTTPTraceResult{
+			Timestamp: time.Now(),
+			Request: &models.HTTPTraceRequest{
+				Method:  request.Method,
+				URL:     request.URL.String(),
+				Headers: request.Header,
+			},
+		}
+		// now process the request
+		recorder := &models.HTTPStatusRecorder{
+			ResponseWriter: writer,
+			StatusCode:     http.StatusOK,
+		}
+		handler(recorder, request)
+		// now trace the response
+		result.Duration = time.Now().Sub(result.Timestamp)
+		result.Response = &models.HTTPTraceResponse{
+			Status:  recorder.StatusCode,
+			Headers: writer.Header(),
+		}
+		// save this result
+		saveResult(result)
+	}
 }
 
 // GetHTTPTrace is used to get the list of http trace results available
 func GetHTTPTrace() []*models.HTTPTraceResult {
 	httpTraceResultsMu.Lock()
 	defer httpTraceResultsMu.Unlock()
-	cleanupHTTPTraceResults()
 	return httpTraceResults
 }
 
-func cleanupHTTPTraceResults() {
-	var numberOfElementsToBeRemoved = commons.HTTPTraceResultsSize - len(httpTraceResults)
-	for i := range httpTraceResults {
-		// check if we need to remove this result
-		if numberOfElementsToBeRemoved <= 0 {
-			break
-		}
-		// now check if we can remove this result
-		if httpTraceResults[i].Done {
-			// we can very well remove this
-			numberOfElementsToBeRemoved--
-			httpTraceResults = append(httpTraceResults[:i], httpTraceResults[i+1:]...)
-		}
+func saveResult(result *models.HTTPTraceResult) {
+	httpTraceResultsMu.Lock()
+	defer httpTraceResultsMu.Unlock()
+
+	if len(httpTraceResults)+1 > commons.HTTPTraceResultsSize {
+		// append removing the last element
+		httpTraceResults = append([]*models.HTTPTraceResult{result},
+			httpTraceResults[:(commons.HTTPTraceResultsSize-1)]...)
+	} else {
+		// append blindly
+		httpTraceResults = append([]*models.HTTPTraceResult{result}, httpTraceResults...)
 	}
+}
+
+func getFastHTTPRequestHeaders(ctx *fasthttp.RequestCtx) map[string][]string {
+	headers := make(map[string][]string)
+	ctx.Request.Header.VisitAll(func(key, value []byte) {
+		headers[string(key)] = []string{string(value)}
+	})
+	return headers
+}
+
+func getFastHTTPResponseHeaders(ctx *fasthttp.RequestCtx) map[string][]string {
+	headers := make(map[string][]string)
+	ctx.Response.Header.VisitAll(func(key, value []byte) {
+		headers[string(key)] = []string{string(value)}
+	})
+	return headers
 }

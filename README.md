@@ -103,38 +103,53 @@ go build
 
 ### HTTP Trace - `/actuator/httpTrace`
 
-This is used to get the trace for the last 100 HTTP requests. Now if this has to be used, then the HTTP requests should be wrapped with the trace as follows.
+This is used to get the trace for the last 100 HTTP requests to your application. Now if this has to be used, then there is an extra configuration has to be done based on the web framework in use.
 
 ```go
 import (
+    "github.com/gin-gonic/gin"
     actuatorCore "github.com/sinhashubham95/go-actuator/core"
+    "github.com/valyala/fasthttp"
     "net/http"
-    "strings"
 )
 
-request, err := http.NewRequest(http.MethodGet, "https://sample.com", strings.NewReader("sample"))
-if err != nil {
-	// incorrect request
-}
+// Using with Fast HTTP
+fasthttp.ListenAndServe(":8080", actuatorCore.WrapFastHTTPHandler(func (ctx *fasthttp.RequestCtx) {
+	// handle your request
+}))
 
-request = actuatorCore.WithClientTrace(request)
+// Using with GIN
+router := gin.Default()
+router.Use(actuatorCore.GINTracer())
 
-// now use this request with whichever http client you want to use
-response, err := http.DefaultClient.Do(request)
+// Using with Net HTTP
+mux := &http.ServeMux{}
+mux.Handle("/route1", actuatorCore.WrapNetHTTPHandler(func (writer http.ResponseWriter, request *http.Request) {}))
+mux.Handle("/route2", actuatorCore.WrapNetHTTPHandler(func (writer http.ResponseWriter, request *http.Request) {}))
 ```
 
 ```json
 [
   {
-    "host": "https://sample.com",
-    "dnsLookupTimeTakenInNanos": 1234,
-    "tcpConnectionTimeTakenInNanos": 1234,
-    "connectTimeTakenInNanos": 1234,
-    "preTransferTimeTakenInNanos": 1234,
-    "isTLSEnabled": true,
-    "tlsHandshakeTimeTakenInNanos": 1234,
-    "serverProcessingTimeTakenInNanos": 1234,
-    "isConnectionReused": true
+    "timestamp": "2019-08-05T19:28:36.353Z",
+    "duration": 1234,
+    "request": {
+      "method": "GET",
+      "url": "https://google.co.in",
+      "headers": {
+        "accept-language": [
+          "en-GB,en-US;q=0.9,en;q=0.8"
+        ]
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "content-type": [
+          "application/json"
+        ]
+      }
+    }
   }
 ]
 ```
