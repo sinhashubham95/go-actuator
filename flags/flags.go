@@ -1,8 +1,8 @@
 package flags
 
 import (
-	"flag"
 	"github.com/sinhashubham95/go-actuator/commons"
+	flag "github.com/spf13/pflag"
 )
 
 var (
