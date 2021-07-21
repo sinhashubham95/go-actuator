@@ -1,4 +1,4 @@
-package netHTTP
+package nethttp
 
 import (
 	"net/http"
@@ -7,9 +7,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleInfo is the handler function for the info endpoint
-func HandleInfo(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetInfo())
+// HandleMetrics is the handler function for the metrics endpoint
+func HandleMetrics(writer http.ResponseWriter, request *http.Request) {
+	body, err := commons.EncodeJSON(core.GetMetrics())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

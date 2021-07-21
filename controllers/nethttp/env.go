@@ -1,4 +1,4 @@
-package netHTTP
+package nethttp
 
 import (
 	"net/http"
@@ -7,9 +7,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleHTTPTrace is used to handle the http trace request
-func HandleHTTPTrace(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetHTTPTrace())
+// HandleEnv is the handler function for the env endpoint
+func HandleEnv(writer http.ResponseWriter, request *http.Request) {
+	body, err := commons.EncodeJSON(core.GetEnvironmentVariables())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

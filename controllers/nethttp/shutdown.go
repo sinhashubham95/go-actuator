@@ -1,4 +1,4 @@
-package netHTTP
+package nethttp
 
 import (
 	"net/http"

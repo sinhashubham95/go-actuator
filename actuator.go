@@ -5,9 +5,9 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 
-	fastHTTPControllers "github.com/sinhashubham95/go-actuator/controllers/fastHTTP"
+	fastHTTPControllers "github.com/sinhashubham95/go-actuator/controllers/fasthttp"
 	ginControllers "github.com/sinhashubham95/go-actuator/controllers/gin"
-	netHTTPControllers "github.com/sinhashubham95/go-actuator/controllers/netHTTP"
+	netHTTPControllers "github.com/sinhashubham95/go-actuator/controllers/nethttp"
 	"github.com/sinhashubham95/go-actuator/models"
 )
 

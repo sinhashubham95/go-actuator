@@ -1,4 +1,4 @@
-package fastHTTP
+package fasthttp
 
 import (
 	"github.com/valyala/fasthttp"

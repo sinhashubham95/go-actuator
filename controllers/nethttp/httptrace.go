@@ -1,4 +1,4 @@
-package netHTTP
+package nethttp
 
 import (
 	"net/http"
@@ -7,9 +7,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleMetrics is the handler function for the metrics endpoint
-func HandleMetrics(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetMetrics())
+// HandleHTTPTrace is used to handle the http trace request
+func HandleHTTPTrace(writer http.ResponseWriter, request *http.Request) {
+	body, err := commons.EncodeJSON(core.GetHTTPTrace())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

@@ -1,4 +1,4 @@
-package fastHTTP
+package fasthttp
 
 import (
 	"github.com/sinhashubham95/go-actuator/models"

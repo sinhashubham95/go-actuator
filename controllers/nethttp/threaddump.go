@@ -1,4 +1,4 @@
-package netHTTP
+package nethttp
 
 import (
 	"net/http"
@@ -7,9 +7,8 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleEnv is the handler function for the env endpoint
-func HandleEnv(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetEnvironmentVariables())
+func HandleThreadDump(writer http.ResponseWriter, request *http.Request) {
+	body, err := core.GetThreadDump()
 	if err != nil {
 		// some error occurred
 		// send the error in the response
@@ -19,7 +18,7 @@ func HandleEnv(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	// now once we have the correct response
-	writer.Header().Add(commons.ContentTypeHeader, commons.ApplicationJSONContentType)
+	writer.Header().Add(commons.ContentTypeHeader, commons.TextStringContentType)
 	_, _ = writer.Write(body)
 	writer.WriteHeader(http.StatusOK)
 }

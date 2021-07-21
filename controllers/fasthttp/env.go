@@ -1,4 +1,4 @@
-package fastHTTP
+package fasthttp
 
 import (
 	"github.com/valyala/fasthttp"
@@ -8,9 +8,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleHTTPTrace is used to handle the http trace request
-func HandleHTTPTrace(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(core.GetHTTPTrace())
+// HandleEnv is the handler function for the env endpoint
+func HandleEnv(ctx *fasthttp.RequestCtx) {
+	body, err := commons.EncodeJSON(core.GetEnvironmentVariables())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

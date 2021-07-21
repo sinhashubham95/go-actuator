@@ -1,4 +1,4 @@
-package fastHTTP
+package fasthttp
 
 import (
 	"github.com/valyala/fasthttp"
@@ -8,9 +8,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleEnv is the handler function for the env endpoint
-func HandleEnv(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(core.GetEnvironmentVariables())
+// HandleThreadDump is the handler for getting thread dump
+func HandleThreadDump(ctx *fasthttp.RequestCtx) {
+	body, err := core.GetThreadDump()
 	if err != nil {
 		// some error occurred
 		// send the error in the response
@@ -20,7 +20,7 @@ func HandleEnv(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// now once we have the correct response
-	ctx.SetContentType(commons.ApplicationJSONContentType)
+	ctx.SetContentType(commons.TextStringContentType)
 	ctx.SetBody(body)
 	ctx.SetStatusCode(http.StatusOK)
 }

@@ -1,4 +1,4 @@
-package fastHTTP
+package fasthttp
 
 import (
 	"github.com/valyala/fasthttp"
@@ -8,9 +8,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleInfo is the handler function for the info endpoint
-func HandleInfo(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(core.GetInfo())
+// HandleMetrics is the handler function for the metrics endpoint
+func HandleMetrics(ctx *fasthttp.RequestCtx) {
+	body, err := commons.EncodeJSON(core.GetMetrics())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

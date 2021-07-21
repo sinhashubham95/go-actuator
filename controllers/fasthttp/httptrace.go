@@ -1,4 +1,4 @@
-package fastHTTP
+package fasthttp
 
 import (
 	"github.com/valyala/fasthttp"
@@ -8,9 +8,9 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-// HandleThreadDump is the handler for getting thread dump
-func HandleThreadDump(ctx *fasthttp.RequestCtx) {
-	body, err := core.GetThreadDump()
+// HandleHTTPTrace is used to handle the http trace request
+func HandleHTTPTrace(ctx *fasthttp.RequestCtx) {
+	body, err := commons.EncodeJSON(core.GetHTTPTrace())
 	if err != nil {
 		// some error occurred
 		// send the error in the response
@@ -20,7 +20,7 @@ func HandleThreadDump(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// now once we have the correct response
-	ctx.SetContentType(commons.TextStringContentType)
+	ctx.SetContentType(commons.ApplicationJSONContentType)
 	ctx.SetBody(body)
 	ctx.SetStatusCode(http.StatusOK)
 }
