@@ -1,10 +1,14 @@
 package core_test
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sinhashubham95/go-actuator/commons"
+	fastHTTPControllers "github.com/sinhashubham95/go-actuator/controllers/fasthttp"
+	"github.com/sinhashubham95/go-actuator/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +18,32 @@ import (
 
 func TestGetHTTPTrace(t *testing.T) {
 	assert.Empty(t, core.GetHTTPTrace())
+}
+
+func TestWithFastHTTP(t *testing.T) {
+	port := getRandomPortNumber()
+
+	go func(endpoint int) {
+		assert.NoError(t, fasthttp.ListenAndServe(fmt.Sprintf(":%d", port),
+			core.WrapFastHTTPHandler(func(ctx *fasthttp.RequestCtx) {
+				fastHTTPControllers.HandleRequest(&models.Config{Endpoints: []int{endpoint}}, ctx)
+			})))
+	}(models.Ping)
+
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%d%s",
+		port, commons.PingEndpoint), nil)
+	assert.NoError(t, err)
+
+	response, err := http.DefaultClient.Do(request)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	traces := core.GetHTTPTrace()
+	assert.NotEmpty(t, traces)
+	trace := traces[0]
+	assert.Equal(t, http.MethodGet, trace.Request.Method)
+	assert.Equal(t, "/ping", trace.Request.URL)
+	assert.Equal(t, http.StatusOK, trace.Response.Status)
 }
 
 func TestWithGIN(t *testing.T) {
@@ -73,10 +103,8 @@ func TestForMoreThanThresholdRequests(t *testing.T) {
 	assert.Empty(t, trace.Response.Headers)
 }
 
-func getFastHTTPHandler() fasthttp.RequestHandler {
-	return core.WrapFastHTTPHandler(func(ctx *fasthttp.RequestCtx) {
-		ctx.SetStatusCode(http.StatusOK)
-	})
+func getRandomPortNumber() int {
+	return rand.Intn(9800) + 100
 }
 
 func setupGINRouter() *gin.Engine {
