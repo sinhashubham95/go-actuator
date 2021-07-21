@@ -8,6 +8,8 @@ import (
 	"github.com/sinhashubham95/go-actuator/models"
 )
 
+// ConfigureHandlers is used to add the respective handler functions for the configured actuator endpoints
+// to the net http server mux.
 func ConfigureHandlers(config *models.Config, mux *http.ServeMux) {
 	for _, e := range config.Endpoints {
 		// now one by one add the handler of each endpoint

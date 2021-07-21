@@ -1,5 +1,6 @@
 package models
 
+// Endpoints enumeration
 const (
 	Env = iota
 	HTTPTrace

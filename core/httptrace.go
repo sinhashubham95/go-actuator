@@ -14,6 +14,8 @@ import (
 var httpTraceResultsMu sync.Mutex
 var httpTraceResults []*models.HTTPTraceResult
 
+// WrapFastHTTPHandler should be used to wrap the created handler function for fast HTTP based web servers,
+// so that the requests to the same can be traced.
 func WrapFastHTTPHandler(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// for each new request create a result and trace the request
@@ -38,6 +40,7 @@ func WrapFastHTTPHandler(handler fasthttp.RequestHandler) fasthttp.RequestHandle
 	}
 }
 
+// GINTracer is the middleware function to be used with the GIN engines for tracing the requests to it.
 func GINTracer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// for each new request create a result and trace the request
@@ -62,6 +65,8 @@ func GINTracer() gin.HandlerFunc {
 	}
 }
 
+// WrapNetHTTPHandler should be used to wrap the created handler function for net HTTP based web servers,
+// so that the requests to the same can be traced.
 func WrapNetHTTPHandler(handler http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		// for each new request create a result and trace the request

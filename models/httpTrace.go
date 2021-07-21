@@ -33,6 +33,8 @@ type HTTPStatusRecorder struct {
 	StatusCode int
 }
 
+// WriteHeader saves an HTTP response header with the provided
+// status code.
 func (r *HTTPStatusRecorder) WriteHeader(statusCode int) {
 	r.StatusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)

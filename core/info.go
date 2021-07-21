@@ -6,6 +6,7 @@ import (
 	"runtime"
 )
 
+// Set of linked build time variables for providing relevant information for the application
 var (
 	BuildStamp       string
 	GitCommitAuthor  string

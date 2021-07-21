@@ -1,5 +1,9 @@
 package models
 
+// BySizeElement reports per-size class allocation statistics.
+// BySize[N] gives statistics for allocations of size S where
+// BySize[N-1].Size < S ≤ BySize[N].Size.
+// This does not report allocations larger than BySize[60].Size.
 type BySizeElement struct {
 	// Size is the maximum byte size of an object in this
 	// size class.

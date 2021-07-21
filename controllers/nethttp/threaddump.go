@@ -7,7 +7,8 @@ import (
 	"github.com/sinhashubham95/go-actuator/core"
 )
 
-func HandleThreadDump(writer http.ResponseWriter, request *http.Request) {
+// HandleThreadDump is the handler to get the thread dump
+func HandleThreadDump(writer http.ResponseWriter, _ *http.Request) {
 	body, err := core.GetThreadDump()
 	if err != nil {
 		// some error occurred

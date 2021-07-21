@@ -26,7 +26,7 @@ func (config *Config) Validate() {
 	}
 	for _, endpoint := range config.Endpoints {
 		if !IsValidEndpoint(endpoint) {
-			panic(errors.New(fmt.Sprintf("invalid endpoint %d provided", endpoint)))
+			panic(fmt.Errorf("invalid endpoint %d provided", endpoint))
 		}
 	}
 }

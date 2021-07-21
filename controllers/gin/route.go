@@ -7,6 +7,8 @@ import (
 	"github.com/sinhashubham95/go-actuator/models"
 )
 
+// ConfigureHandlers is used to add the respective handler functions for the configured actuator endpoints
+// to the gin engine.
 func ConfigureHandlers(config *models.Config, router *gin.Engine) {
 	actuator := router.Group(config.Prefix)
 	for _, e := range config.Endpoints {
