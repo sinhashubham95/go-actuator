@@ -9,16 +9,22 @@ import (
 	"github.com/sinhashubham95/go-actuator/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
-	"math/rand"
 	"net/http"
+	"sync"
 	"testing"
 )
 
 var encodeJSON = commons.EncodeJSON
 var getThreadDump = core.GetThreadDump
 
+var portMu sync.Mutex
+var port = 1001
+
 func getRandomPortNumber() int {
-	return rand.Intn(9800) + 100
+	portMu.Lock()
+	defer portMu.Unlock()
+	port += 10
+	return port
 }
 
 func setupFastHTTPHandlersAndGetResponse(t *testing.T, endpoint int, path string) *http.Response {

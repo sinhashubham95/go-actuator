@@ -8,13 +8,16 @@ import (
 	"github.com/sinhashubham95/go-actuator/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/sinhashubham95/go-actuator/core"
 )
+
+var portMu sync.Mutex
+var port = 2001
 
 func TestGetHTTPTrace(t *testing.T) {
 	assert.Empty(t, core.GetHTTPTrace())
@@ -104,7 +107,10 @@ func TestForMoreThanThresholdRequests(t *testing.T) {
 }
 
 func getRandomPortNumber() int {
-	return rand.Intn(9800) + 100
+	portMu.Lock()
+	defer portMu.Unlock()
+	port += 10
+	return port
 }
 
 func setupGINRouter() *gin.Engine {
