@@ -10,7 +10,7 @@ import (
 
 // HandleMetrics is the handler function for the metrics endpoint
 func HandleMetrics(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(core.GetMetrics())
+	body, err := EncodeJSON(core.GetMetrics())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

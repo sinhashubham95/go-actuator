@@ -10,7 +10,7 @@ import (
 
 // HandleInfo is the handler function for the info endpoint
 func HandleInfo(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(core.GetInfo())
+	body, err := EncodeJSON(core.GetInfo())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

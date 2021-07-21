@@ -10,7 +10,7 @@ import (
 
 // HandleEnv is the handler function for the env endpoint
 func HandleEnv(ctx *fasthttp.RequestCtx) {
-	body, err := commons.EncodeJSON(core.GetEnvironmentVariables())
+	body, err := EncodeJSON(core.GetEnvironmentVariables())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

@@ -1,7 +1,9 @@
 package fasthttp_test
 
 import (
+	"errors"
 	"fmt"
+	"github.com/sinhashubham95/go-actuator/commons"
 	fastHTTPControllers "github.com/sinhashubham95/go-actuator/controllers/fasthttp"
 	"github.com/sinhashubham95/go-actuator/core"
 	"github.com/sinhashubham95/go-actuator/models"
@@ -11,6 +13,9 @@ import (
 	"net/http"
 	"testing"
 )
+
+var encodeJSON = commons.EncodeJSON
+var getThreadDump = core.GetThreadDump
 
 func getRandomPortNumber() int {
 	return rand.Intn(9800) + 100
@@ -33,4 +38,26 @@ func setupFastHTTPHandlersAndGetResponse(t *testing.T, endpoint int, path string
 	assert.NoError(t, err)
 
 	return response
+}
+
+func mockEncodeJSONWithError() {
+	encodeJSON = fastHTTPControllers.EncodeJSON
+	fastHTTPControllers.EncodeJSON = func(interface{}) ([]byte, error) {
+		return nil, errors.New("error")
+	}
+}
+
+func unMockEncodeJSON() {
+	fastHTTPControllers.EncodeJSON = encodeJSON
+}
+
+func mockGetThreadDumpWithError() {
+	getThreadDump = fastHTTPControllers.GetThreadDump
+	fastHTTPControllers.GetThreadDump = func() ([]byte, error) {
+		return nil, errors.New("error")
+	}
+}
+
+func unMockGetThreadDump() {
+	fastHTTPControllers.GetThreadDump = getThreadDump
 }

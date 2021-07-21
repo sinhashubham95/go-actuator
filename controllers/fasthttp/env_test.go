@@ -18,3 +18,10 @@ func TestHandleEnv(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, env)
 }
+
+func TestHandleEnvEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+	response := setupFastHTTPHandlersAndGetResponse(t, models.Env, commons.EnvEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+}

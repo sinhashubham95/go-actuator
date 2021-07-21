@@ -8,8 +8,8 @@ import (
 )
 
 // HandleMetrics is the handler function for the metrics endpoint
-func HandleMetrics(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetMetrics())
+func HandleMetrics(writer http.ResponseWriter, _ *http.Request) {
+	body, err := EncodeJSON(core.GetMetrics())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

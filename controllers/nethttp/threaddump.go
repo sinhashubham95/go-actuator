@@ -4,12 +4,11 @@ import (
 	"net/http"
 
 	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleThreadDump is the handler to get the thread dump
 func HandleThreadDump(writer http.ResponseWriter, _ *http.Request) {
-	body, err := core.GetThreadDump()
+	body, err := GetThreadDump()
 	if err != nil {
 		// some error occurred
 		// send the error in the response

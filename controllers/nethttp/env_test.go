@@ -18,3 +18,9 @@ func TestHandleEnv(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, env)
 }
+
+func TestHandleEnvEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+	setupMuxAndGetResponse(t, models.Env, commons.EnvEndpoint)
+}

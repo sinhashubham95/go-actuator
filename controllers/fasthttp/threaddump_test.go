@@ -17,3 +17,10 @@ func TestHandleThreadDump(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, string(bytes))
 }
+
+func TestHandleThreadDumpEncodeJSONError(t *testing.T) {
+	mockGetThreadDumpWithError()
+	defer unMockGetThreadDump()
+	response := setupFastHTTPHandlersAndGetResponse(t, models.ThreadDump, commons.ThreadDumpEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+}

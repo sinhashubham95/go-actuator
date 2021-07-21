@@ -18,3 +18,10 @@ func TestHandleHTTPTrace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, traces)
 }
+
+func TestHandleHTTPTraceEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+	response := setupFastHTTPHandlersAndGetResponse(t, models.HTTPTrace, commons.HTTPTraceEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+}

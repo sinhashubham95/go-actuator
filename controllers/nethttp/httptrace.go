@@ -8,8 +8,8 @@ import (
 )
 
 // HandleHTTPTrace is used to handle the http trace request
-func HandleHTTPTrace(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetHTTPTrace())
+func HandleHTTPTrace(writer http.ResponseWriter, _ *http.Request) {
+	body, err := EncodeJSON(core.GetHTTPTrace())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

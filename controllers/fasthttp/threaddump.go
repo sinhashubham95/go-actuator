@@ -5,12 +5,11 @@ import (
 	"net/http"
 
 	"github.com/sinhashubham95/go-actuator/commons"
-	"github.com/sinhashubham95/go-actuator/core"
 )
 
 // HandleThreadDump is the handler for getting thread dump
 func HandleThreadDump(ctx *fasthttp.RequestCtx) {
-	body, err := core.GetThreadDump()
+	body, err := GetThreadDump()
 	if err != nil {
 		// some error occurred
 		// send the error in the response

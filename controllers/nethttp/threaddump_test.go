@@ -13,3 +13,9 @@ func TestHandleThreadDump(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotEmpty(t, w.Body.String())
 }
+
+func TestHandleThreadDumpEncodeJSONError(t *testing.T) {
+	mockGetThreadDumpWithError()
+	defer unMockGetThreadDump()
+	setupMuxAndGetResponse(t, models.ThreadDump, commons.ThreadDumpEndpoint)
+}

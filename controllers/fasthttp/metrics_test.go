@@ -18,3 +18,10 @@ func TestHandleMetrics(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, metrics)
 }
+
+func TestHandleMetricsEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+	response := setupFastHTTPHandlersAndGetResponse(t, models.Metrics, commons.MetricsEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+}

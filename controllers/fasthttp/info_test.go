@@ -18,3 +18,10 @@ func TestHandleInfo(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, info)
 }
+
+func TestHandleInfoEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+	response := setupFastHTTPHandlersAndGetResponse(t, models.Info, commons.InfoEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+}

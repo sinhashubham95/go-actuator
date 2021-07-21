@@ -8,8 +8,8 @@ import (
 )
 
 // HandleInfo is the handler function for the info endpoint
-func HandleInfo(writer http.ResponseWriter, request *http.Request) {
-	body, err := commons.EncodeJSON(core.GetInfo())
+func HandleInfo(writer http.ResponseWriter, _ *http.Request) {
+	body, err := EncodeJSON(core.GetInfo())
 	if err != nil {
 		// some error occurred
 		// send the error in the response

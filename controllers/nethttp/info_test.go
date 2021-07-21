@@ -18,3 +18,9 @@ func TestHandleInfo(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, info)
 }
+
+func TestHandleInfoEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+	setupMuxAndGetResponse(t, models.Info, commons.InfoEndpoint)
+}
