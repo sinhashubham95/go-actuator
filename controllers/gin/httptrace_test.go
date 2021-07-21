@@ -10,12 +10,12 @@ import (
 	"github.com/sinhashubham95/go-actuator/commons"
 )
 
-func TestHandleEnv(t *testing.T) {
-	w := setupRouterAndGetResponse(t, models.Env, commons.EnvEndpoint)
+func TestHandleHTTPTrace(t *testing.T) {
+	w := setupRouterAndGetResponse(t, models.HTTPTrace, commons.HTTPTraceEndpoint)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var env map[string]interface{}
-	err := json.NewDecoder(w.Body).Decode(&env)
+	var traces []*models.HTTPTraceResult
+	err := json.NewDecoder(w.Body).Decode(&traces)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, env)
+	assert.NotEmpty(t, traces)
 }

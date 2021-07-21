@@ -37,7 +37,6 @@ const (
 // Endpoints
 const (
 	EnvEndpoint        = "/env"
-	HealthEndpoint     = "/health"
 	HTTPTraceEndpoint  = "/httpTrace"
 	InfoEndpoint       = "/info"
 	MetricsEndpoint    = "/metrics"

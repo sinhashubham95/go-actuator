@@ -9,7 +9,6 @@ import (
 
 func ConfigureHandlers(config *models.Config, router *gin.Engine) {
 	actuator := router.Group(config.Prefix)
-	gin.Logger()
 	for _, e := range config.Endpoints {
 		// now one by one add the handler of each endpoint
 		switch e {
@@ -18,15 +17,15 @@ func ConfigureHandlers(config *models.Config, router *gin.Engine) {
 		case models.HTTPTrace:
 			actuator.GET(commons.HTTPTraceEndpoint, HandleHTTPTrace)
 		case models.Info:
-			actuator.GET(commons.HealthEndpoint, HandleInfo)
+			actuator.GET(commons.InfoEndpoint, HandleInfo)
 		case models.Metrics:
-			actuator.GET(commons.HealthEndpoint, HandleMetrics)
+			actuator.GET(commons.MetricsEndpoint, HandleMetrics)
 		case models.Ping:
-			actuator.GET(commons.HealthEndpoint, HandlePing)
+			actuator.GET(commons.PingEndpoint, HandlePing)
 		case models.Shutdown:
-			actuator.GET(commons.HealthEndpoint, HandleShutdown)
+			actuator.GET(commons.ShutdownEndpoint, HandleShutdown)
 		case models.ThreadDump:
-			actuator.GET(commons.HealthEndpoint, HandleThreadDump)
+			actuator.GET(commons.ThreadDumpEndpoint, HandleThreadDump)
 		}
 	}
 }
