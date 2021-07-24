@@ -2,6 +2,7 @@ package commons
 
 // Common Constants
 const (
+	ActuatorFlagSetName   = "actuator-flag-set"
 	Application           = "app"
 	Arch                  = "arch"
 	BuildStamp            = "buildStamp"

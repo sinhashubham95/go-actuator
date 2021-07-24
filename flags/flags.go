@@ -1,19 +1,26 @@
 package flags
 
 import (
-	"github.com/sinhashubham95/go-actuator/commons"
 	flag "github.com/spf13/pflag"
+	"os"
+
+	"github.com/sinhashubham95/go-actuator/commons"
 )
 
+var flagSet = flag.NewFlagSet(commons.ActuatorFlagSetName, flag.ContinueOnError)
+
 var (
-	env     = flag.String(commons.Env, commons.EnvDefaultValue, commons.EnvUsage)
-	name    = flag.String(commons.Name, commons.NameDefaultValue, commons.NameUsage)
-	port    = flag.Int(commons.Port, commons.PortDefaultValue, commons.PortUsage)
-	version = flag.String(commons.Version, commons.VersionDefaultValue, commons.VersionUsage)
+	env     = flagSet.String(commons.Env, commons.EnvDefaultValue, commons.EnvUsage)
+	name    = flagSet.String(commons.Name, commons.NameDefaultValue, commons.NameUsage)
+	port    = flagSet.Int(commons.Port, commons.PortDefaultValue, commons.PortUsage)
+	version = flagSet.String(commons.Version, commons.VersionDefaultValue, commons.VersionUsage)
 )
 
 func init() {
-	flag.Parse()
+	err := flagSet.Parse(os.Args[1:])
+	if err != nil {
+		return
+	}
 }
 
 // Env is the environment where the application is running
