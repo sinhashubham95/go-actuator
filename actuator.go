@@ -13,6 +13,7 @@ import (
 
 // GetFastHTTPActuatorHandler is used to get the request handler for fast http
 func GetFastHTTPActuatorHandler(config *models.Config) fasthttp.RequestHandler {
+	handleConfigs(config)
 	return func(ctx *fasthttp.RequestCtx) {
 		fastHTTPControllers.HandleRequest(config, ctx)
 	}
@@ -20,10 +21,17 @@ func GetFastHTTPActuatorHandler(config *models.Config) fasthttp.RequestHandler {
 
 // ConfigureGINActuatorEngine is used to configure the gin engine with the actuator handlers
 func ConfigureGINActuatorEngine(config *models.Config, engine *gin.Engine) {
+	handleConfigs(config)
 	ginControllers.ConfigureHandlers(config, engine)
 }
 
 // ConfigureNetHTTPHandler is used to configure the net http mux with the actuator handlers
 func ConfigureNetHTTPHandler(config *models.Config, mux *http.ServeMux) {
+	handleConfigs(config)
 	netHTTPControllers.ConfigureHandlers(config, mux)
+}
+
+func handleConfigs(config *models.Config) {
+	config.Validate()
+	config.Default()
 }
