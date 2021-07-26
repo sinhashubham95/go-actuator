@@ -26,11 +26,11 @@ jobs:
         run: |
           go get -v -t -d ./...
       - name: Run tests
-        run: go test -v -covermode=count -coverprofile=profile.out ./...
+        run: go test ./... -coverprofile profile.cov
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
         with:
-          path-to-profile: profile.out
+          path-to-profile: profile.cov
           flag-name: ${{ matrix.platform }}-go-${{ matrix.go-version }}
           parallel: true
 
