@@ -1,8 +1,6 @@
-name: Go
+name: Test
 
 on:
-  push:
-    branches: [master]
   pull_request:
     branches: [master]
 
@@ -33,31 +31,3 @@ jobs:
           path-to-profile: profile.cov
           flag-name: ${{ matrix.platform }}-go-${{ matrix.go-version }}
           parallel: true
-
-  finish:
-    name: Finish
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - name: Sending coverage finished
-        uses: shogo82148/actions-goveralls@v1
-        with:
-          parallel-finished: true
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - name: Set up Go 1.x
-        uses: actions/setup-go@v2
-        with:
-          go-version: ^1.16
-        id: go
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
-      - name: Get dependencies
-        run: |
-          go get -v -t -d ./...
-      - name: Build
-        run: go build -v
