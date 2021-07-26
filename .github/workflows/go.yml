@@ -26,11 +26,11 @@ jobs:
         run: |
           go get -v -t -d ./...
       - name: Run tests
-        run: go test -v -coverprofile=profile.cov ./...
+        run: go test -v -coverprofile=profile.out ./...
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
         with:
-          path-to-profile: profile.cov
+          path-to-profile: profile.out
           flag-name: ${{ matrix.platform }}-go-${{ matrix.go-version }}
           parallel: true
 
@@ -59,9 +59,5 @@ jobs:
       - name: Get dependencies
         run: |
           go get -v -t -d ./...
-          if [ -f Gopkg.toml ]; then
-              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-              dep ensure
-          fi
       - name: Build
         run: go build -v
