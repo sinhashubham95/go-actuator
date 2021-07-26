@@ -10,21 +10,17 @@ import (
 	"github.com/valyala/fasthttp"
 	"net/http"
 	"net/http/httptest"
-	"sync"
 	"testing"
 
 	"github.com/sinhashubham95/go-actuator/core"
 )
-
-var portMu sync.Mutex
-var port = 2001
 
 func TestGetHTTPTrace(t *testing.T) {
 	assert.Empty(t, core.GetHTTPTrace())
 }
 
 func TestWithFastHTTP(t *testing.T) {
-	port := getRandomPortNumber()
+	port := 2001
 
 	go func(endpoint int) {
 		assert.NoError(t, fasthttp.ListenAndServe(fmt.Sprintf(":%d", port),
@@ -104,13 +100,6 @@ func TestForMoreThanThresholdRequests(t *testing.T) {
 	assert.Empty(t, trace.Request.Headers)
 	assert.Equal(t, http.StatusOK, trace.Response.Status)
 	assert.Empty(t, trace.Response.Headers)
-}
-
-func getRandomPortNumber() int {
-	portMu.Lock()
-	defer portMu.Unlock()
-	port += 10
-	return port
 }
 
 func setupGINRouter() *gin.Engine {
