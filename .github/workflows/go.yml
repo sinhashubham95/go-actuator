@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.13.x, 1.14.x, 1.15.x, 1.16.x]
-        platform: [macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Install Go
@@ -40,7 +40,7 @@ jobs:
 
   finish:
     name: Finish
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: [test]
     steps:
       - name: Sending coverage finished
@@ -50,13 +50,13 @@ jobs:
 
   build:
     name: Build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: [test]
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: ^1.14
+          go-version: ^1.16
         id: go
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
