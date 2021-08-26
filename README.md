@@ -6,7 +6,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/sinhashubham95/go-actuator/badge.svg?branch=master)](https://coveralls.io/github/sinhashubham95/go-actuator?branch=master)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#utilities)
 
-GO actuator configures the set of actuator endpoints for your application. It is compatible with [Fast HTTP](https://github.com/valyala/fasthttp), [GIN](https://github.com/gin-gonic/gin) and [NET/HTTP](https://pkg.go.dev/net/http).
+GO actuator configures the set of actuator endpoints for your application. It is very extensible and can be configured with `Go's native HTTP Server Mux`, or with any `3rd party web framework` as well.
 
 ## Project Versioning
 
@@ -14,7 +14,7 @@ Go actuator uses [semantic versioning](http://semver.org/). API should not chang
 
 ## Installation
 
-To install Gin package, you need to install Go and set your Go workspace first.
+To install `Go Actuator` package, you need to install Go and set your Go workspace first.
 
 1. The first need Go installed (version 1.13+ is required), then you can use the below Go command to install Go Actuator.
 
@@ -30,43 +30,78 @@ import "github.com/sinhashubham95/go-actuator"
 
 ## How to Use
 
-The actuator library is compatible with the most famous web frameworks. This is highly configurable and each endpoint can be enabled or disabled during initialization. You can also specify a prefix path for each of these configured endpoints(with default value `/actuator`).
+The actuator library exposes a plain native handler function, and it is the responsibility of the application to put this handler to use. This can be used either directly with `Go's native HTTP Server Mux`, or with any `3rd party web framework` as well.
 
 ### Configuration
 
 The configuration contains the following:-
 
-1. **Endpoints** - This is the list of endpoints which will be enabled. This is not a mandatory parameter. If not provided, then all the endpoints will be enabled. The possible endpoints are - `/env`, `/httpTrace`, `/info`, `/metrics`, `/ping`, `/shutdown` and `/threadDump`. You can find the description of each of these endpoints below.
-
-2. **Prefix** - This is the prefix request path for all the configured endpoints.
+1. **Endpoints** - This is the list of endpoints which will be enabled. This is not a mandatory parameter. If not provided, then all the endpoints will be enabled. The possible endpoints are - `/env`, `/info`, `/metrics`, `/ping`, `/shutdown` and `/threadDump`. You can find the description of each of these endpoints below.
+2. **Env** - This is the environment where the application is running. For example, `dev`, `stg`, `prod`, etc.
+3. **Name** - This is the name of the application which is using this actuator library.
+4. **Port** - This is the port where the application is running.
+5. **Version** - This is the current application version.
 
 ```go
-import "github.com/sinhashubham95/go-actuator/models"
+import actuator "github.com/sinhashubham95/go-actuator"
 
-config := &models.Config{
+config := &actuator.Config{
 	Endpoints: []int{
-		models.Env, models.HTTPTrace, models.Info, models.Metrics, models.Ping, models.Shutdown, models.ThreadDump
+		actuator.Env,
+		actuator.Info,
+		actuator.Metrics,
+		actuator.Ping,
+		actuator.Shutdown,
+		actuator.ThreadDump,
     },
-    Prefix: "/actuator"
+    Env: "dev",
+    Name: "Naruto Rocks",
+    Port: 8080,
+    Version: "0.1.0",
 }
+```
+
+### Using with [Go's Native Server Mux](https://pkg.go.dev/net/http)
+
+```go
+import (
+    actuator "github.com/sinhashubham95/go-actuator"
+    "net/http"
+)
+
+// create a server
+mux := &http.ServeMux{}
+
+// get the handler for actuator
+actuatorHandler := actuator.GetActuatorHandler(&Config{})
+// configure the handler at this base endpoint
+mux.Handle("/actuator", actuatorHandler)
+
+// configure other handlers
+....
 ```
 
 ### Using with [Fast HTTP](https://github.com/valyala/fasthttp)
 
 ```go
 import (
+	"strings"
+	
     "github.com/valyala/fasthttp"
     actuator "github.com/sinhashubham95/go-actuator"
-	"github.com/sinhashubham95/go-actuator/models"
 )
 
-actuatorHandler := actuator.GetFastHTTPActuatorHandler(&models.Config{})
+// get the handler for actuator
+actuatorHandler := fasthttp.NewFastHTTPHandlerFunc(actuator.GetActuatorHandler(&Config{}))
+
+// create a fast http handler
 handler := func(ctx *fasthttp.RequestCtx) {
-	switch(ctx.Path()) {
-	// your configured paths
-    default:
+    if strings.HasPrefix(ctx.Path(), "/actuator") {
+        // use the actuator handler
     	actuatorHandler(ctx)
+    	return
     }
+    // other request handler calls
 }
 fasthttp.ListenAndServe(":8080", handler)
 ```
@@ -80,21 +115,16 @@ import (
 	"github.com/sinhashubham95/go-actuator/models"
 )
 
+// create the gin engine
 engine := gin.Default()
-actuator.ConfigureGINActuatorEngine(&models.Config{}, engine)
-```
 
-### Using with [Net HTTP](https://pkg.go.dev/net/http)
+// get the handler for actuator
+actuatorHandler := actuator.GetActuatorHandler(&Config{})
+ginActuatorHandler := func(ctx *gin.Context) {
+	actuatorHandler(ctx.Writer, ctx.Request)
+}
 
-```go
-import (
-    actuator "github.com/sinhashubham95/go-actuator"
-	"github.com/sinhashubham95/go-actuator/models"
-    "net/http"
-)
-
-mux := &http.ServeMux{}
-actuator.ConfigureNetHTTPHandler(&models.Config{}, mux)
+engine.GET("/actuator/*endpoint", ginActuatorHandler)
 ```
 
 ## Endpoints
@@ -105,7 +135,7 @@ This is used to get all the environment variables for the runtime where the appl
 
 ```shell
 go build
-./${APPLICATION_NAME} -env=${ENVIRONMENT_NAME}
+./${APPLICATION_NAME}
 ```
 
 ```json
@@ -113,59 +143,6 @@ go build
   "env_key_1": "env_value_1",
   "env_key_2": "env_value_2"
 }
-```
-
-### HTTP Trace - `/actuator/httpTrace`
-
-This is used to get the trace for the last 100 HTTP requests to your application. Now if this has to be used, then there is an extra configuration has to be done based on the web framework in use.
-
-```go
-import (
-    "github.com/gin-gonic/gin"
-    actuatorCore "github.com/sinhashubham95/go-actuator/core"
-    "github.com/valyala/fasthttp"
-    "net/http"
-)
-
-// Using with Fast HTTP
-fasthttp.ListenAndServe(":8080", actuatorCore.WrapFastHTTPHandler(func (ctx *fasthttp.RequestCtx) {
-	// handle your request
-}))
-
-// Using with GIN
-router := gin.Default()
-router.Use(actuatorCore.GINTracer())
-
-// Using with Net HTTP
-mux := &http.ServeMux{}
-mux.Handle("/route1", actuatorCore.WrapNetHTTPHandler(func (writer http.ResponseWriter, request *http.Request) {}))
-mux.Handle("/route2", actuatorCore.WrapNetHTTPHandler(func (writer http.ResponseWriter, request *http.Request) {}))
-```
-
-```json
-[
-  {
-    "timestamp": "2019-08-05T19:28:36.353Z",
-    "duration": 1234,
-    "request": {
-      "method": "GET",
-      "url": "https://google.co.in",
-      "headers": {
-        "accept-language": [
-          "en-GB,en-US;q=0.9,en;q=0.8"
-        ]
-      }
-    },
-    "response": {
-      "status": 200,
-      "headers": {
-        "content-type": [
-          "application/json"
-        ]
-      }
-    }
-  }
-]
 ```
 
 ### Info - `/actuator/info`
@@ -180,8 +157,8 @@ commitAuthor=$(git --no-pager show -s --format='%an <%ae>' "$commitId")
 gitUrl=$(git config --get remote.origin.url)
 userName=$(whoami)
 hostName=$(hostname)
-go build -ldflags "<other linking params> -X github.com/sinhashubham95/go-actuator/core.BuildStamp=$buildStamp -X github.com/sinhashubham95/go-actuator/core.GitCommitID=$commitId -X github.com/sinhashubham95/go-actuator/core.GitPrimaryBranch=$2 -X github.com/sinhashubham95/go-actuator/core.GitURL=$gitUrl -X github.com/sinhashubham95/go-actuator/core.Username=$userName -X github.com/sinhashubham95/go-actuator/core.HostName=$hostName  -X \"github.com/sinhashubham95/go-actuator/core.GitCommitTime=$commitTime\" -X \"github.com/sinhashubham95/go-actuator/core.GitCommitAuthor=$commitAuthor\""
-./${APPLICATION_NAME} -env=${ENVIRONMENT_NAME} -name=${APPLICATION_NAME} -port=${APPLICATION_PORT} -version=${APPLICATION_VERSION}
+go build -ldflags "<other linking params> -X github.com/sinhashubham95/go-actuator.BuildStamp=$buildStamp -X github.com/sinhashubham95/go-actuator.GitCommitID=$commitId -X github.com/sinhashubham95/go-actuator.GitPrimaryBranch=$2 -X github.com/sinhashubham95/go-actuator.GitURL=$gitUrl -X github.com/sinhashubham95/go-actuator.Username=$userName -X github.com/sinhashubham95/go-actuator.HostName=$hostName  -X \"github.com/sinhashubham95/go-actuator.GitCommitTime=$commitTime\" -X \"github.com/sinhashubham95/go-actuator.GitCommitAuthor=$commitAuthor\""
+./${APPLICATION_NAME}
 ```
 
 ```json
