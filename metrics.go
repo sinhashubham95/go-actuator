@@ -1,4 +1,9 @@
-package models
+package actuator
+
+import (
+	"net/http"
+	"runtime"
+)
 
 // BySizeElement reports per-size class allocation statistics.
 // BySize[N] gives statistics for allocations of size S where
@@ -82,7 +87,7 @@ type MemStats struct {
 	// stack memory.
 	// HeapIdle minus HeapReleased estimates the amount of memory
 	// that could be returned to the OS, but is being retained by
-	// the runtime so it can grow the heap without requesting more
+	// the runtime, so it can grow the heap without requesting more
 	// memory from the OS. If this difference is significantly
 	// larger than the heap size, it indicates there was a recent
 	// transient spike in live heap size.
@@ -213,4 +218,76 @@ type MemStats struct {
 	// BySize[N-1].Size < S ≤ BySize[N].Size.
 	// This does not report allocations larger than BySize[60].Size.
 	BySize []BySizeElement
+}
+
+// MetricsResponse is the response for the metrics endpoint
+type MetricsResponse struct {
+	MemStats MemStats `json:"memory"`
+}
+
+func getRuntimeMetrics() MetricsResponse {
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	bySize := make([]BySizeElement, 0, len(memStats.BySize))
+	for _, size := range memStats.BySize {
+		bySize = append(bySize, BySizeElement{
+			Size:         size.Size,
+			MAllocations: size.Mallocs,
+			Frees:        size.Frees,
+		})
+	}
+
+	return MetricsResponse{
+		MemStats: MemStats{
+			Alloc:         memStats.Alloc,
+			TotalAlloc:    memStats.TotalAlloc,
+			Sys:           memStats.Sys,
+			Lookups:       memStats.Lookups,
+			MAllocations:  memStats.Mallocs,
+			Frees:         memStats.Frees,
+			HeapAlloc:     memStats.HeapAlloc,
+			HeapSys:       memStats.HeapSys,
+			HeapIdle:      memStats.HeapIdle,
+			HeapInuse:     memStats.HeapInuse,
+			HeapReleased:  memStats.HeapReleased,
+			HeapObjects:   memStats.HeapObjects,
+			StackInuse:    memStats.StackInuse,
+			StackSys:      memStats.StackSys,
+			MSpanInuse:    memStats.MSpanInuse,
+			MSpanSys:      memStats.MSpanSys,
+			MCacheInuse:   memStats.MCacheInuse,
+			MCacheSys:     memStats.MCacheSys,
+			BuckHashSys:   memStats.BuckHashSys,
+			GCSys:         memStats.GCSys,
+			OtherSys:      memStats.OtherSys,
+			NextGC:        memStats.NextGC,
+			LastGC:        memStats.LastGC,
+			PauseTotalNs:  memStats.PauseTotalNs,
+			PauseNs:       memStats.PauseNs,
+			PauseEnd:      memStats.PauseEnd,
+			NumGC:         memStats.NumGC,
+			NumForcedGC:   memStats.NumForcedGC,
+			GCCPUFraction: memStats.GCCPUFraction,
+			EnableGC:      memStats.EnableGC,
+			DebugGC:       memStats.DebugGC,
+			BySize:        bySize,
+		},
+	}
+}
+
+// handleMetrics is the handler function for the metrics endpoint
+func handleMetrics(writer http.ResponseWriter, _ *http.Request) {
+	body, err := encodeJSONFunction(getRuntimeMetrics())
+	if err != nil {
+		// some error occurred
+		// send the error in the response
+		writer.WriteHeader(http.StatusInternalServerError)
+		writer.Header().Add(contentTypeHeader, textStringContentType)
+		_, _ = writer.Write([]byte(err.Error()))
+		return
+	}
+	// now once we have the correct response
+	writer.Header().Add(contentTypeHeader, applicationJSONContentType)
+	_, _ = writer.Write(body)
 }
