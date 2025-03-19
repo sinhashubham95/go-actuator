@@ -16,7 +16,7 @@ Go actuator uses [semantic versioning](http://semver.org/). API should not chang
 
 To install `Go Actuator` package, you need to install Go and set your Go workspace first.
 
-1. The first need Go installed (version 1.13+ is required), then you can use the below Go command to install Go Actuator.
+1. The first need Go installed (version 1.18+ is required), then you can use the below Go command to install Go Actuator.
 
 ```shell
 go get github.com/sinhashubham95/go-actuator
@@ -36,7 +36,7 @@ The actuator library exposes a plain native handler function, and it is the resp
 
 The configuration contains the following:-
 
-1. **Endpoints** - This is the list of endpoints which will be enabled. This is not a mandatory parameter. If not provided, then all the endpoints will be enabled. The possible endpoints are - `/env`, `/info`, `/metrics`, `/ping`, `/shutdown` and `/threadDump`. You can find the description of each of these endpoints below.
+1. **Endpoints** - This is the list of endpoints which will be enabled. This is not a mandatory parameter. If not provided, then only `info` and `ping` endpoints will be enabled. The possible endpoints are - `/env`, `/info`, `/metrics`, `/ping`, `/shutdown` and `/threadDump`. You can find the description of each of these endpoints below.
 2. **Env** - This is the environment where the application is running. For example, `dev`, `stg`, `prod`, etc.
 3. **Name** - This is the name of the application which is using this actuator library.
 4. **Port** - This is the port where the application is running.

@@ -35,7 +35,7 @@ func TestValidateConfigWithIncorrectEndpoint(t *testing.T) {
 func TestSetDefaultsInConfig(t *testing.T) {
 	c := &Config{}
 	c.setDefaults()
-	assert.Equal(t, AllEndpoints, c.Endpoints)
+	assert.Equal(t, defaultEndpoints, c.Endpoints)
 }
 
 func TestEnv(t *testing.T) {
@@ -61,6 +61,12 @@ func TestEnvInvalidMethod(t *testing.T) {
 
 func TestEnvWithoutConfig(t *testing.T) {
 	w := setupMuxWithConfigAndGetResponseForMethod(t, nil, http.MethodGet, envEndpoint)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, notFoundError, w.Body.String())
+}
+
+func TestEnvWithConfig(t *testing.T) {
+	w := setupMuxWithConfigAndGetResponseForMethod(t, &Config{Endpoints: []int{Env}}, http.MethodGet, envEndpoint)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var data map[string]string
@@ -121,6 +127,12 @@ func TestMetricsInvalidMethod(t *testing.T) {
 
 func TestMetricsWithoutConfig(t *testing.T) {
 	w := setupMuxWithConfigAndGetResponseForMethod(t, nil, http.MethodGet, metricsEndpoint)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, notFoundError, w.Body.String())
+}
+
+func TestMetricsWithConfig(t *testing.T) {
+	w := setupMuxWithConfigAndGetResponseForMethod(t, &Config{Endpoints: []int{Metrics}}, http.MethodGet, metricsEndpoint)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var data MetricsResponse
@@ -189,12 +201,18 @@ func TestShutdownInvalidMethod(t *testing.T) {
 }
 
 func TestShutdownWithoutConfig(t *testing.T) {
+	w := setupMuxWithConfigAndGetResponseForMethod(t, nil, http.MethodGet, shutdownEndpoint)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, notFoundError, w.Body.String())
+}
+
+func TestShutdownWithConfig(t *testing.T) {
 	defer func() {
 		if r := recover(); r != nil {
 			// do nothing here, just to handle shutdown gracefully
 		}
 	}()
-	w := setupMuxWithConfigAndGetResponseForMethod(t, nil, http.MethodGet, shutdownEndpoint)
+	w := setupMuxWithConfigAndGetResponseForMethod(t, &Config{Endpoints: []int{Shutdown}}, http.MethodGet, shutdownEndpoint)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.Empty(t, w.Body)
@@ -221,6 +239,12 @@ func TestThreadDumpInvalidMethod(t *testing.T) {
 
 func TestThreadDumpWithoutConfig(t *testing.T) {
 	w := setupMuxWithConfigAndGetResponseForMethod(t, nil, http.MethodGet, threadDumpEndpoint)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, notFoundError, w.Body.String())
+}
+
+func TestThreadDumpWithConfig(t *testing.T) {
+	w := setupMuxWithConfigAndGetResponseForMethod(t, &Config{Endpoints: []int{ThreadDump}}, http.MethodGet, threadDumpEndpoint)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.NotEmpty(t, w.Body)
