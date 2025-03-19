@@ -17,7 +17,7 @@ type HealthCheckInfo struct {
 
 var healthCheckInfoLock sync.RWMutex
 var lastHealthCheckStamp time.Time
-var healthCheckInfo = make(map[string]HealthCheckInfo)
+var healthCheckInfo map[string]HealthCheckInfo
 
 func getClonedHealthCheckInfo(info map[string]HealthCheckInfo) map[string]HealthCheckInfo {
 	result := make(map[string]HealthCheckInfo)
@@ -71,10 +71,12 @@ func getHealthCheckInfoAndCacheIfSuccess(config *Config) (ok bool, result map[st
 			ok = false
 		}
 	}
-	healthCheckInfoLock.Lock()
-	defer healthCheckInfoLock.Unlock()
-	lastHealthCheckStamp = time.Now()
-	healthCheckInfo = getClonedHealthCheckInfo(result)
+	if ok {
+		healthCheckInfoLock.Lock()
+		defer healthCheckInfoLock.Unlock()
+		lastHealthCheckStamp = time.Now()
+		healthCheckInfo = getClonedHealthCheckInfo(result)
+	}
 	return
 }
 
@@ -90,13 +92,19 @@ func getHealthCheck(config *Config) (ok bool, result map[string]HealthCheckInfo)
 func getHealthHandler(config *Config) http.HandlerFunc {
 	return func(writer http.ResponseWriter, _ *http.Request) {
 		ok, result := getHealthCheck(config)
-		writer.Header().Add(contentTypeHeader, applicationJSONContentType)
-		b, err := encodeJSON(result)
-		if err != nil || !ok {
+		b, err := encodeJSONFunction(result)
+		if err != nil {
+			writer.Header().Add(contentTypeHeader, textStringContentType)
 			writer.WriteHeader(http.StatusInternalServerError)
+			_, _ = writer.Write([]byte(err.Error()))
 		} else {
-			writer.WriteHeader(http.StatusOK)
+			writer.Header().Add(contentTypeHeader, applicationJSONContentType)
+			if ok {
+				writer.WriteHeader(http.StatusOK)
+			} else {
+				writer.WriteHeader(http.StatusInternalServerError)
+			}
+			_, _ = writer.Write(b)
 		}
-		_, _ = writer.Write(b)
 	}
 }

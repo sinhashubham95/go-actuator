@@ -92,7 +92,7 @@ func (config *Config) setDefaultsAndValidate() {
 				panic("health checker key not provided")
 			}
 			if checker.Func == nil {
-				panic("health checker func not provided")
+				panic(fmt.Errorf("health checker function not provided for %s", checker.Key))
 			}
 			if _, ok := keys[checker.Key]; ok {
 				panic(fmt.Errorf("duplicate health checker key: %s", checker.Key))

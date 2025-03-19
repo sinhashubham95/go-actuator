@@ -1,6 +1,8 @@
 package actuator
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -15,7 +17,7 @@ func TestValidateEmptyConfig(t *testing.T) {
 		}
 	}()
 	c := &Config{}
-	c.validate()
+	c.setDefaultsAndValidate()
 }
 
 func TestValidateConfigWithIncorrectEndpoint(t *testing.T) {
@@ -29,13 +31,82 @@ func TestValidateConfigWithIncorrectEndpoint(t *testing.T) {
 	c := &Config{
 		Endpoints: []int{20},
 	}
-	c.validate()
+	c.setDefaultsAndValidate()
 }
 
 func TestSetDefaultsInConfig(t *testing.T) {
 	c := &Config{}
-	c.setDefaults()
+	c.setDefaultsAndValidate()
 	assert.Equal(t, defaultEndpoints, c.Endpoints)
+}
+
+func TestValidateConfigHealthNoConfiguration(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				assert.Equal(t, "health checker not configured", e.Error())
+			}
+		}
+	}()
+	c := &Config{Endpoints: []int{Health}}
+	c.setDefaultsAndValidate()
+}
+
+func TestValidateConfigHealthNoChecker(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				assert.Equal(t, "no health checkers provided", e.Error())
+			}
+		}
+	}()
+	c := &Config{Endpoints: []int{Health}, Health: &HealthConfig{}}
+	c.setDefaultsAndValidate()
+}
+
+func TestValidateConfigHealthCheckerKeyNotProvided(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				assert.Equal(t, "health checker key not provided", e.Error())
+			}
+		}
+	}()
+	c := &Config{Endpoints: []int{Health}, Health: &HealthConfig{
+		Checkers: []HealthChecker{{}},
+	}}
+	c.setDefaultsAndValidate()
+}
+
+func TestValidateConfigHealthCheckerFunctionNotProvided(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				assert.Equal(t, "health checker function not provided for naruto", e.Error())
+			}
+		}
+	}()
+	c := &Config{Endpoints: []int{Health}, Health: &HealthConfig{
+		Checkers: []HealthChecker{{Key: "naruto"}},
+	}}
+	c.setDefaultsAndValidate()
+}
+
+func TestValidateConfigHealthCheckerDuplicateKey(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				assert.Equal(t, "duplicate health checker key: naruto", e.Error())
+			}
+		}
+	}()
+	c := &Config{Endpoints: []int{Health}, Health: &HealthConfig{
+		Checkers: []HealthChecker{
+			{Key: "naruto", Func: func(_ context.Context) error { return nil }},
+			{Key: "naruto", Func: func(_ context.Context) error { return nil }},
+		},
+	}}
+	c.setDefaultsAndValidate()
 }
 
 func TestEnv(t *testing.T) {
@@ -102,6 +173,172 @@ func TestInfoWithoutConfig(t *testing.T) {
 	var data map[string]interface{}
 	getTypedJSONBody(t, w.Body, &data)
 	assert.NotEmpty(t, data)
+}
+
+func TestHealth(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var data map[string]HealthCheckInfo
+	getTypedJSONBody(t, w.Body, &data)
+	assert.Equal(t, 1, len(data))
+	for _, v := range data {
+		assert.False(t, v.IsMandatory && !v.Success)
+	}
+}
+
+func TestHealthFromCache(t *testing.T) {
+	defer clearHealthCheckCache()
+
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusOK, w.Code)
+	var data map[string]HealthCheckInfo
+	getTypedJSONBody(t, w.Body, &data)
+	assert.Equal(t, 1, len(data))
+	for _, v := range data {
+		assert.False(t, v.IsMandatory && !v.Success)
+	}
+
+	w = setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusOK, w.Code)
+	getTypedJSONBody(t, w.Body, &data)
+	assert.Equal(t, 1, len(data))
+	for _, v := range data {
+		assert.False(t, v.IsMandatory && !v.Success)
+	}
+}
+
+func TestHealthNonMandatoryFailure(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}, {
+			Key: "another naruto",
+			Func: func(_ context.Context) error {
+				return errors.New("some error")
+			},
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusOK, w.Code)
+	var data map[string]HealthCheckInfo
+	getTypedJSONBody(t, w.Body, &data)
+	assert.Equal(t, 2, len(data))
+	for _, v := range data {
+		assert.False(t, v.IsMandatory && !v.Success)
+	}
+}
+
+func TestHealthMandatoryFailure(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}, {
+			Key: "another naruto",
+			Func: func(_ context.Context) error {
+				return errors.New("some error")
+			},
+			IsMandatory: true,
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	var data map[string]HealthCheckInfo
+	getTypedJSONBody(t, w.Body, &data)
+	assert.Equal(t, 2, len(data))
+}
+
+func TestHealthNotConfigured(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxAndGetResponse(t, Info, healthEndpoint)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, notFoundError, w.Body.String())
+}
+
+func TestHealthInvalidMethod(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}}}},
+		http.MethodHead, healthEndpoint)
+	assert.Equal(t, http.StatusMethodNotAllowed, w.Code)
+	assert.Equal(t, methodNotAllowedError, w.Body.String())
+}
+
+func TestHealthWithoutConfig(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t, nil, http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, notFoundError, w.Body.String())
+}
+
+func TestHealthWithConfig(t *testing.T) {
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var data map[string]HealthCheckInfo
+	getTypedJSONBody(t, w.Body, &data)
+	for _, v := range data {
+		assert.False(t, v.IsMandatory && !v.Success)
+	}
+}
+
+func TestHealthEncodeJSONError(t *testing.T) {
+	mockEncodeJSONWithError()
+	defer unMockEncodeJSON()
+
+	defer clearHealthCheckCache()
+	w := setupMuxWithConfigAndGetResponseForMethod(t,
+		&Config{Endpoints: []int{Health}, Health: &HealthConfig{Checkers: []HealthChecker{{
+			Key: "naruto",
+			Func: func(_ context.Context) error {
+				return nil
+			},
+		}}}},
+		http.MethodGet, healthEndpoint)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Equal(t, "error", w.Body.String())
+	assert.Equal(t, textStringContentType, w.Header().Get(contentTypeHeader))
 }
 
 func TestMetrics(t *testing.T) {
