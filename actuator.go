@@ -123,6 +123,8 @@ func getHandlerMap(config *Config) map[string]http.HandlerFunc {
 			handlerMap[envEndpoint] = getEnvHandler(config)
 		case Info:
 			handlerMap[infoEndpoint] = getInfoHandler(config)
+		case Health:
+			handlerMap[healthEndpoint] = getHealthHandler(config)
 		case Metrics:
 			handlerMap[metricsEndpoint] = handleMetrics
 		case Ping:

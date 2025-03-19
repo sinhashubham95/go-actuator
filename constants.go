@@ -32,6 +32,7 @@ const (
 const (
 	envEndpoint        = "/env"
 	infoEndpoint       = "/info"
+	healthEndpoint     = "/health"
 	metricsEndpoint    = "/metrics"
 	pingEndpoint       = "/ping"
 	shutdownEndpoint   = "/shutdown"
