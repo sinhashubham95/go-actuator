@@ -18,6 +18,8 @@ const (
 // AllEndpoints is the list of endpoints supported
 var AllEndpoints = []int{Env, Info, Metrics, Ping, Shutdown, ThreadDump}
 
+var defaultEndpoints = []int{Info}
+
 // Config is the set of configurable parameters for the actuator setup
 type Config struct {
 	Endpoints []int
@@ -38,7 +40,7 @@ func (config *Config) validate() {
 // Default is used to fill the default configs in case of any missing ones
 func (config *Config) setDefaults() {
 	if config.Endpoints == nil {
-		config.Endpoints = AllEndpoints
+		config.Endpoints = defaultEndpoints
 	}
 }
 
