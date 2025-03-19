@@ -41,6 +41,7 @@ The configuration contains the following:-
 3. **Name** - This is the name of the application which is using this actuator library.
 4. **Port** - This is the port where the application is running.
 5. **Version** - This is the current application version.
+6. **Health** - This is used to provide a set of health checkers to derive the health of an application using its dependencies, some of which might be mandatory and some non-mandatory, which helps maintain a robust eye on the application.
 
 ```go
 import actuator "github.com/sinhashubham95/go-actuator"
@@ -73,7 +74,7 @@ import (
 mux := &http.ServeMux{}
 
 // get the handler for actuator
-actuatorHandler := actuator.GetActuatorHandler(&Config{})
+actuatorHandler := actuator.GetActuatorHandler(&actuator.Config{})
 // configure the handler at this base endpoint
 mux.Handle("/actuator", actuatorHandler)
 
@@ -92,7 +93,7 @@ import (
 )
 
 // get the handler for actuator
-actuatorHandler := fasthttp.NewFastHTTPHandlerFunc(actuator.GetActuatorHandler(&Config{}))
+actuatorHandler := fasthttp.NewFastHTTPHandlerFunc(actuator.GetActuatorHandler(&actuator.Config{}))
 
 // create a fast http handler
 handler := func(ctx *fasthttp.RequestCtx) {
@@ -119,12 +120,39 @@ import (
 engine := gin.Default()
 
 // get the handler for actuator
-actuatorHandler := actuator.GetActuatorHandler(&Config{})
+actuatorHandler := actuator.GetActuatorHandler(&actuator.Config{})
 ginActuatorHandler := func(ctx *gin.Context) {
 	actuatorHandler(ctx.Writer, ctx.Request)
 }
 
 engine.GET("/actuator/*endpoint", ginActuatorHandler)
+```
+
+### Using with [Hertz](https://github.com/cloudwego/hertz)
+
+```go
+import (
+    "context"
+    "github.com/cloudwego/hertz/pkg/app"
+    "github.com/cloudwego/hertz/pkg/app/server"
+    "github.com/cloudwego/hertz/pkg/common/adaptor"
+    "github.com/sinhashubham95/go-actuator"
+)
+
+var actuatorHandler = actuator.GetActuatorHandler(&actuator.Config{})
+
+func handleActuator(ctx context.Context, c *app.RequestContext) {
+	request, err := adaptor.GetCompatRequest(&c.Request)
+	if err != nil {
+        c.Status(http.StatusInternalServerError)
+		return
+	}
+	response := adaptor.GetCompatResponseWriter(&c.Response)
+	actuatorHandler(response, request)
+}
+
+s := server.Default()
+s.Any("/actuator/*any", handleActuator)
 ```
 
 ## Endpoints
@@ -169,20 +197,73 @@ go build -ldflags "<other linking params> -X github.com/sinhashubham95/go-actuat
     "version": "APPLICATION_VERSION"
   },
   "git": {
-    "username": "s0s01qp",
-    "hostName": "m-C02WV1L6HTD5",
-    "buildStamp": "2019-08-22_09:44:04PM",
+    "username": "",
+    "hostName": "",
+    "buildStamp": "",
     "commitAuthor": "Shubham Sinha ",
-    "commitId": "836475215e3ecf0ef26e0d5b65a9db626568ef89",
-    "commitTime": "2019-08-23 02:27:26 +0530",
-    "branch": "master",
-    "url": "https://gecgithub01.walmart.com/RT-Integrated-Fulfillment/gif-ui-bff.git"
+    "commitId": "",
+    "commitTime": "",
+    "branch": "",
+    "url": "",
+    "startupStamp": ""
   },
   "runtime": {
     "arch": "",
     "os": "",
     "port": 8080,
     "runtimeVersion": ""
+  }
+}
+```
+
+### Health - `/actuator/health`
+
+This is used to provide the most health of an application, validating the underlying dependencies, via the various health checks.
+
+These health checks might be costly to the application. That's why there is an additional cache which is implemented internally for the same. A successful health check is cached for the provided cache duration(described below). During this duration, the same cached health check will be provided as part of the response.
+
+The health check can be configured with the following set of details, which needs to be provided only if the `Health` endpoint is enabled.
+1. **CacheDuration** - This is an optional parameter, which defines the duration for which the health check once performed will be served from cache if success. The default value is 1 hour.
+2. **Timeout** - This is an optional parameter, which signifies the time within which the health check should be completed. The context passed in the health check functions, will cancel post this time duration. The implementation of the health check function should honour the context cancellation.
+3. **Checkers** - These are the set of dependencies of the application which needs to be validated as part of the health check. Each health checker can have the following set of configurations.
+   1. **Key** - This is the unique key which can identify the dependency of this application uniquely.
+   2. **Func** - This is the implementation function which will be called as part of the health check.
+   3. **IsMandatory** - This tells whether this dependency is a mandatory dependency for this application or not. If this value is set to false, even if the provided health check function fails, it won't fail the overall health check.
+
+```go
+import "github.com/sinhashubham95/go-actuator"
+
+cfg := &actuator.Config{
+	Endpoints: []int{actuator.Health},
+    Health: &actuator.HealthConfig{
+		Checkers: []actuator.HealthChecker{
+		    {
+			    Key: "test1",
+				Func: func(ctx context.Context) error {
+					// validate connectivity to database
+					// or validate connectivity to redis
+					// or validate downstream api service
+					// etc
+                },
+				IsMandatory: true,
+            },
+        },
+    },
+}
+```
+
+```json
+{
+  "test1": {
+    "key": "test1",
+    "isMandatory": false,
+    "success": false,
+    "error": "some error"
+  },
+  "test2": {
+    "key": "test1",
+    "isMandatory": true,
+    "success": true
   }
 }
 ```
