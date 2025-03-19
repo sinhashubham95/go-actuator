@@ -1,14 +1,17 @@
 package actuator
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // Endpoints enumeration
 const (
 	Env = iota
 	Info
+	Health
 	Metrics
 	Ping
 	Shutdown
@@ -16,9 +19,36 @@ const (
 )
 
 // AllEndpoints is the list of endpoints supported
-var AllEndpoints = []int{Env, Info, Metrics, Ping, Shutdown, ThreadDump}
+var AllEndpoints = []int{Env, Info, Health, Metrics, Ping, Shutdown, ThreadDump}
 
 var defaultEndpoints = []int{Info, Ping}
+
+// HealthCheckFunc is the implementation to be called in case of a health check.
+type HealthCheckFunc func(ctx context.Context) error
+
+// HealthChecker is the set of details corresponding to a health check.
+// For the health check, a custom function HealthChecker.Func has to be passed, which will be called during the health check.
+// HealthChecker.IsMandatory decides whether this check will create an impact on the overall health check result.
+type HealthChecker struct {
+	Key         string
+	Func        HealthCheckFunc
+	IsMandatory bool
+}
+
+// HealthConfig is the set of configurable parameters for the health endpoint setup.
+//
+// HealthConfig.CacheDuration is the duration for which the health check details will be cached,
+// during which the cached response of the prior health check performed will be reused.
+// Defaults to 1 hour.
+//
+// HealthConfig.Timeout is the timeout which will be set in the context passed to the health check functions.
+// It is the responsibility of the function implementation to honour the context cancellation.
+// Defaults to 5 seconds.
+type HealthConfig struct {
+	CacheDuration time.Duration
+	Timeout       time.Duration
+	Checkers      []HealthChecker
+}
 
 // Config is the set of configurable parameters for the actuator setup
 type Config struct {
@@ -27,20 +57,48 @@ type Config struct {
 	Name      string
 	Port      int
 	Version   string
+	Health    *HealthConfig // optional, health check config
 }
 
-func (config *Config) validate() {
+func (config *Config) setDefaultsAndValidate() {
+	if config.Endpoints == nil {
+		config.Endpoints = defaultEndpoints
+	}
+	isHealthEnabled := false
 	for _, endpoint := range config.Endpoints {
 		if !isValidEndpoint(endpoint) {
 			panic(fmt.Errorf("invalid endpoint %d provided", endpoint))
 		}
+		if endpoint == Health {
+			isHealthEnabled = true
+		}
 	}
-}
-
-// Default is used to fill the default configs in case of any missing ones
-func (config *Config) setDefaults() {
-	if config.Endpoints == nil {
-		config.Endpoints = defaultEndpoints
+	if isHealthEnabled {
+		if config.Health == nil {
+			panic("health checker not configured")
+		}
+		if config.Health.CacheDuration == 0 {
+			config.Health.CacheDuration = defaultHealthCheckCacheDuration
+		}
+		if config.Health.Timeout == 0 {
+			config.Health.Timeout = defaultHealthCheckTimeout
+		}
+		if len(config.Health.Checkers) == 0 {
+			panic("no health checkers provided")
+		}
+		keys := make(map[string]struct{})
+		for _, checker := range config.Health.Checkers {
+			if checker.Key == "" {
+				panic("health checker key not provided")
+			}
+			if checker.Func == nil {
+				panic(fmt.Errorf("health checker function not provided for %s", checker.Key))
+			}
+			if _, ok := keys[checker.Key]; ok {
+				panic(fmt.Errorf("duplicate health checker key: %s", checker.Key))
+			}
+			keys[checker.Key] = struct{}{}
+		}
 	}
 }
 
@@ -50,7 +108,7 @@ func GetActuatorHandler(config *Config) http.HandlerFunc {
 	if config == nil {
 		config = &Config{}
 	}
-	handleConfigs(config)
+	config.setDefaultsAndValidate()
 	handlerMap := getHandlerMap(config)
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodGet {
@@ -69,11 +127,6 @@ func GetActuatorHandler(config *Config) http.HandlerFunc {
 	}
 }
 
-func handleConfigs(config *Config) {
-	config.validate()
-	config.setDefaults()
-}
-
 func getHandlerMap(config *Config) map[string]http.HandlerFunc {
 	handlerMap := make(map[string]http.HandlerFunc, len(config.Endpoints))
 	for _, e := range config.Endpoints {
@@ -83,6 +136,8 @@ func getHandlerMap(config *Config) map[string]http.HandlerFunc {
 			handlerMap[envEndpoint] = getEnvHandler(config)
 		case Info:
 			handlerMap[infoEndpoint] = getInfoHandler(config)
+		case Health:
+			handlerMap[healthEndpoint] = getHealthHandler(config)
 		case Metrics:
 			handlerMap[metricsEndpoint] = handleMetrics
 		case Ping:

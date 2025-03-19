@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"runtime/pprof"
 	"testing"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
@@ -60,4 +61,11 @@ func mockPprofLookupWithError() {
 
 func unMockPprofLookup() {
 	pprofLookupFunction = tempPprofLookupFunction
+}
+
+func clearHealthCheckCache() {
+	healthCheckInfoLock.Lock()
+	defer healthCheckInfoLock.Unlock()
+	healthCheckInfo = nil
+	lastHealthCheckStamp = time.Now().Add(-time.Hour * 24)
 }
