@@ -3,6 +3,7 @@ package actuator
 import (
 	"net/http"
 	"runtime"
+	"time"
 )
 
 // Set of linked build time variables for providing relevant information for the application
@@ -16,6 +17,9 @@ var (
 	HostName         string
 	Username         string
 )
+
+// application start time stamp
+var startupStamp = time.Now().UTC().Format(time.RFC1123Z)
 
 func getInfo(config *Config) map[string]interface{} {
 	return map[string]interface{}{
@@ -33,6 +37,7 @@ func getInfo(config *Config) map[string]interface{} {
 			gitURLKey:           GitURL,
 			hostNameKey:         HostName,
 			usernameKey:         Username,
+			startupStampKey:     startupStamp,
 		},
 		runtimeKey: map[string]interface{}{
 			archKey:           runtime.GOARCH,

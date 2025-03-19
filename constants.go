@@ -22,6 +22,7 @@ const (
 	runtimeVersionKey   = "runtimeVersion"
 	usernameKey         = "username"
 	versionKey          = "version"
+	startupStampKey     = "startupStamp"
 	slash               = "/"
 )
 
