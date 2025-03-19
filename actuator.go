@@ -18,7 +18,7 @@ const (
 // AllEndpoints is the list of endpoints supported
 var AllEndpoints = []int{Env, Info, Metrics, Ping, Shutdown, ThreadDump}
 
-var defaultEndpoints = []int{Info}
+var defaultEndpoints = []int{Info, Ping}
 
 // Config is the set of configurable parameters for the actuator setup
 type Config struct {
