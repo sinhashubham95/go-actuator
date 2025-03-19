@@ -21,14 +21,14 @@ const (
 // AllEndpoints is the list of endpoints supported
 var AllEndpoints = []int{Env, Info, Health, Metrics, Ping, Shutdown, ThreadDump}
 
-var defaultEndpoints = []int{Info, Ping, Health}
+var defaultEndpoints = []int{Info, Ping}
 
 // HealthCheckFunc is the implementation to be called in case of a health check.
 type HealthCheckFunc func(ctx context.Context) error
 
 // HealthChecker is the set of details corresponding to a health check.
-// For the health check, a custom function `HealthChecker.Func` has to be passed, which will be called during the health check.
-// `HealthChecker.IsMandatory` decides whether this check will create an impact on the overall health check result.
+// For the health check, a custom function HealthChecker.Func has to be passed, which will be called during the health check.
+// HealthChecker.IsMandatory decides whether this check will create an impact on the overall health check result.
 type HealthChecker struct {
 	Key         string
 	Func        HealthCheckFunc
@@ -36,6 +36,14 @@ type HealthChecker struct {
 }
 
 // HealthConfig is the set of configurable parameters for the health endpoint setup.
+//
+// HealthConfig.CacheDuration is the duration for which the health check details will be cached,
+// during which the cached response of the prior health check performed will be reused.
+// Defaults to 1 hour.
+//
+// HealthConfig.Timeout is the timeout which will be set in the context passed to the health check functions.
+// It is the responsibility of the function implementation to honour the context cancellation.
+// Defaults to 5 seconds.
 type HealthConfig struct {
 	CacheDuration time.Duration
 	Timeout       time.Duration
@@ -52,18 +60,32 @@ type Config struct {
 	Health    *HealthConfig // optional, health check config
 }
 
-func (config *Config) validate() {
+func (config *Config) setDefaultsAndValidate() {
+	if config.Endpoints == nil {
+		config.Endpoints = defaultEndpoints
+	}
+	isHealthEnabled := false
 	for _, endpoint := range config.Endpoints {
 		if !isValidEndpoint(endpoint) {
 			panic(fmt.Errorf("invalid endpoint %d provided", endpoint))
 		}
+		if endpoint == Health {
+			isHealthEnabled = true
+		}
 	}
-}
-
-// Default is used to fill the default configs in case of any missing ones
-func (config *Config) setDefaults() {
-	if config.Endpoints == nil {
-		config.Endpoints = defaultEndpoints
+	if isHealthEnabled {
+		if config.Health == nil {
+			panic("health checker not configured")
+		}
+		if config.Health.CacheDuration == 0 {
+			config.Health.CacheDuration = defaultHealthCheckCacheDuration
+		}
+		if config.Health.Timeout == 0 {
+			config.Health.Timeout = defaultHealthCheckTimeout
+		}
+		if len(config.Health.Checkers) == 0 {
+			panic("no health checkers provided")
+		}
 	}
 }
 
@@ -73,7 +95,7 @@ func GetActuatorHandler(config *Config) http.HandlerFunc {
 	if config == nil {
 		config = &Config{}
 	}
-	handleConfigs(config)
+	config.setDefaultsAndValidate()
 	handlerMap := getHandlerMap(config)
 	return func(writer http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodGet {
@@ -90,11 +112,6 @@ func GetActuatorHandler(config *Config) http.HandlerFunc {
 		// or endpoint not enabled
 		sendStringResponse(writer, http.StatusNotFound, notFoundError)
 	}
-}
-
-func handleConfigs(config *Config) {
-	config.validate()
-	config.setDefaults()
 }
 
 func getHandlerMap(config *Config) map[string]http.HandlerFunc {

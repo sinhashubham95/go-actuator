@@ -1,5 +1,7 @@
 package actuator
 
+import "time"
+
 // Common Constants
 const (
 	applicationKey      = "app"
@@ -48,4 +50,10 @@ const (
 	methodNotAllowedError = "requested method is not allowed on the called endpoint"
 	notFoundError         = "not found"
 	profileNotFoundError  = "profile not found"
+)
+
+// health check defaults
+var (
+	defaultHealthCheckCacheDuration = time.Hour
+	defaultHealthCheckTimeout       = 5 * time.Second
 )
