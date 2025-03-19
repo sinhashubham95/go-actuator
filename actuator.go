@@ -1,14 +1,17 @@
 package actuator
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // Endpoints enumeration
 const (
 	Env = iota
 	Info
+	Health
 	Metrics
 	Ping
 	Shutdown
@@ -16,9 +19,28 @@ const (
 )
 
 // AllEndpoints is the list of endpoints supported
-var AllEndpoints = []int{Env, Info, Metrics, Ping, Shutdown, ThreadDump}
+var AllEndpoints = []int{Env, Info, Health, Metrics, Ping, Shutdown, ThreadDump}
 
-var defaultEndpoints = []int{Info, Ping}
+var defaultEndpoints = []int{Info, Ping, Health}
+
+// HealthCheckFunc is the implementation to be called in case of a health check.
+type HealthCheckFunc func(ctx context.Context) error
+
+// HealthChecker is the set of details corresponding to a health check.
+// For the health check, a custom function `HealthChecker.Func` has to be passed, which will be called during the health check.
+// `HealthChecker.IsMandatory` decides whether this check will create an impact on the overall health check result.
+type HealthChecker struct {
+	Key         string
+	Func        HealthCheckFunc
+	IsMandatory bool
+}
+
+// HealthConfig is the set of configurable parameters for the health endpoint setup.
+type HealthConfig struct {
+	CacheDuration time.Duration
+	Timeout       time.Duration
+	Checkers      []HealthChecker
+}
 
 // Config is the set of configurable parameters for the actuator setup
 type Config struct {
@@ -27,6 +49,7 @@ type Config struct {
 	Name      string
 	Port      int
 	Version   string
+	Health    *HealthConfig // optional, health check config
 }
 
 func (config *Config) validate() {
