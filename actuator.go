@@ -86,6 +86,19 @@ func (config *Config) setDefaultsAndValidate() {
 		if len(config.Health.Checkers) == 0 {
 			panic("no health checkers provided")
 		}
+		keys := make(map[string]struct{})
+		for _, checker := range config.Health.Checkers {
+			if checker.Key == "" {
+				panic("health checker key not provided")
+			}
+			if checker.Func == nil {
+				panic("health checker func not provided")
+			}
+			if _, ok := keys[checker.Key]; ok {
+				panic(fmt.Errorf("duplicate health checker key: %s", checker.Key))
+			}
+			keys[checker.Key] = struct{}{}
+		}
 	}
 }
 
